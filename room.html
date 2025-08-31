@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" href="images/favicon-32x32.png" type="image/png">
+  <title>Manage Rooms - Lab Rat Experiment</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Link to your CSS file -->
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      display: flex;
+      flex-direction: column;
+      font-family: Arial, sans-serif;
+      background: url('images/homepage_background.png') no-repeat center center fixed;
+      background-size: cover;
+    }
+    main {
+      flex: 1;
+      padding: 20px;
+    }
+    footer {
+      text-align: center;
+      padding: 15px;
+      color: #fff;
+      background: linear-gradient(to right, #8806CE, #330066);
+    }
+    /* NAVIGATION */
+    .main-nav {
+      padding: 10px 0;
+      position: relative;
+      background: linear-gradient(to right, #8806CE, #330066);
+    }
+    .main-nav .logo a {
+      text-decoration: none;
+      color: #fff;
+      font-size: 24px;
+      font-weight: bold;
+      margin-left: 20px;
+      display: flex;
+      align-items: center;
+    }
+    .main-nav .logo img {
+      height: 40px;
+      margin-right: 10px;
+    }
+    .nav-list {
+      list-style: none;
+      display: flex;
+      justify-content: center;
+      margin: 0;
+      padding-right: 550px;
+    }
+    .nav-list li {
+      margin: 0 20px;
+    }
+    .nav-list li a {
+      color: #fff;
+      text-decoration: none;
+      font-size: 16px;
+      text-transform: uppercase;
+      transition: color 0.3s ease;
+    }
+    .nav-list li a:hover {
+      color: #7b1fa2;
+    }
+    .nav-list li a.active{
+      text-decoration: underline;
+      color: #fff;
+    }
+    .account-nav {
+      position: absolute;
+      right: 20px;
+      top: 20px;
+    }
+    .account-nav button {
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .dropdown {
+      display: none;
+      position: absolute;
+      right: 20px;
+      top: 40px;
+      background-color: #d6b4fc;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      list-style: none;
+      padding: 10px;
+      margin: 0;
+      min-width: 100px;
+      z-index: 100;
+    }
+    .dropdown li {
+      margin: 5px 0;
+    }
+    .dropdown li a {
+      color: #7b1fa2;
+      text-decoration: none;
+    }
+    .container {
+      max-width: 900px;
+      min-height: 625px;
+      margin: 40px auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h1, h2 {
+      color: #330066;
+      text-align: center;
+    }
+    form {
+      margin-bottom: 40px;
+    }
+    form input[type="text"] {
+      width: 80%;
+      padding: 10px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      font-size: 1em;
+    }
+    form button {
+      padding: 12px 20px;
+      background: #8806CE;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      margin-top: 20px;
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.3s ease;
+    }
+    form button:hover {
+      background: #7b1fa2;
+      transform: scale(1.05);
+    }
+    .room {
+      border-bottom: 1px solid #ccc;
+      padding: 15px 0;
+      margin-bottom: 15px;
+    }
+    .room h3 {
+      margin: 0 0 10px;
+      font-size: 1.5em;
+      color: #8806CE;
+    }
+    .room ul {
+      margin: 0;
+      padding-left: 20px;
+      list-style-type: none;
+      color: #330066;
+    }
+    .players-list li {
+      margin-bottom: 5px;
+    }
+    .no-players {
+      font-style: italic;
+      color: #777;
+    }
+    #no-rooms p{
+        text-align:center; 
+        display:none;
+    }
+  </style>
+</head>
+<body>
+  <!-- Firebase Authentication and Firestore Integration -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut, getIdTokenResult } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-auth.js";
+    import { getFirestore, collection, query, where, orderBy, getDocs, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore.js";
+    
+    // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+    const firebaseConfig = {
+  apiKey: "AIzaSyBJSBnqaB1x7RON_0bLEKRSRdUvxnWLK8E",
+  authDomain: "lab-rat-937e3.firebaseapp.com",
+  projectId: "lab-rat-937e3",
+  storageBucket: "lab-rat-937e3.firebasestorage.app",
+  messagingSenderId: "298279049498",
+  appId: "1:298279049498:web:66e0a609436b6113e8f4a3"
+};
+    
+    // Initialize Firebase
+    const appFirebase = initializeApp(firebaseConfig);
+    const auth = getAuth(appFirebase);
+    const db = getFirestore(appFirebase);
+    
+    // Export variables to the global scope for access within non-module scripts.
+    window.auth = auth;
+    window.db = db;
+    window.getIdTokenResult = getIdTokenResult;
+    window.getDocs = getDocs;
+    window.collection = collection;
+    window.query = query;
+    window.where = where;
+    window.orderBy = orderBy;
+    window.addDoc = addDoc;
+    window.serverTimestamp = serverTimestamp;
+  </script>
+  
+  <!-- Header & Navigation -->
+  <header>
+    <nav class="main-nav">
+      <div class="logo">
+        <a href="index.html">
+          <img src="../images/logo.png" alt="Lab Rat Experiment Logo">
+          <span class="visually-hidden">Lab Rat Experiment</span>
+        </a>
+      </div>
+      <ul class="nav-list">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="game.html">Game</a></li>
+        <!-- Links available only when authenticated -->
+        <li id="leaderboard-link" class="hidden"><a href="leaderboard.html">Leaderboard</a></li>
+        <li id="room-link" class="hidden"><a href="room.html">Rooms</a></li>
+        <li><a href="contact.html">Contact Us</a></li>
+      </ul>
+      <div class="account-nav">
+        <button id="account-button">Account &#x25BC;</button>
+        <ul class="dropdown" id="account-dropdown">
+          <!-- These links will be toggled based on authentication -->
+          <li id="profile-link"><a href="profile.html">Profile</a></li>
+          <li id="logout-link" class="hidden"><a href="#" id="logout-button">Logout</a></li>
+          <li id="login-link"><a href="login.html">Login</a></li>
+          <li id="signup-link"><a href="register.html">Sign Up</a></li>
+        </ul>
+      </div>
+    </nav>
+  </header>
+  
+  <!-- Main Container -->
+  <div class="container">
+    <h1>Room Management</h1>
+    <h2>Create a New Room</h2>
+    <!-- Create Room Form -->
+    <form id="createRoomForm">
+      <label for="room_name">Room Name:</label>
+      <input type="text" id="room_name" name="room_name" placeholder="Enter room name" required>
+      <button type="submit">Create Room</button>
+    </form>
+
+    <h2>Your Rooms</h2>
+    <div id="rooms-container">
+      <!-- Room list will be dynamically generated here -->
+      <p id="no-rooms">You have not created any rooms yet.</p>
+    </div>
+  </div>
+  
+  <footer>
+    <p>&copy; 2025 Lab Rat Experiment. All rights reserved.</p>
+  </footer>
+  
+  <!-- Inline Scripts -->
+  <script>
+    // Account Dropdown Logic
+    document.addEventListener("DOMContentLoaded", function(){
+      var accountButton = document.getElementById("account-button");
+      var accountDropdown = document.getElementById("account-dropdown");
+      accountButton.addEventListener("click", function(e) {
+         e.stopPropagation();
+         accountDropdown.style.display = (accountDropdown.style.display === "block") ? "none" : "block";
+      });
+      document.addEventListener("click", function() {
+         accountDropdown.style.display = "none";
+      });
+    });
+    
+    // Global variable to track teacher mode.
+    let teacherMode = false;
+    
+    // Check authentication and teacher privileges.
+    // Instead of using alert pop-ups and abrupt redirects, we display an inline error message if access is denied.
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) {
+        window.location.href = "login.html";
+        return;
+      }
+      try {
+        const idTokenResult = await getIdTokenResult(user);
+        if (!idTokenResult.claims.teacher) {
+          document.querySelector('.container').innerHTML =
+            "<h1>Access Denied</h1><p>This page is restricted to teacher roles.</p>";
+          return;
+        }
+        teacherMode = true;
+      } catch (error) {
+        console.error("Error checking teacher claim:", error);
+        document.querySelector('.container').innerHTML =
+          "<h1>Error</h1><p>Unable to verify teacher credentials.</p>";
+        return;
+      }
+      
+      // Update the account button text with the user's name.
+      const username = user.displayName 
+                        ? user.displayName 
+                        : (user.email ? user.email.split('@')[0] : "User");
+      document.getElementById("account-button").textContent = username + " ▼";
+      // Toggle navigation links for authenticated users.
+      document.getElementById("profile-link").style.display = "block";
+      document.getElementById("logout-link").style.display = "block";
+      document.getElementById("login-link").style.display = "none";
+      document.getElementById("signup-link").style.display = "none";
+      
+      // Load rooms if teacherMode is enabled.
+      loadRooms();
+    });
+    
+    // Function to generate a random room code (6-character alphanumeric string)
+    function generateRoomCode(length = 6) {
+      const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+      let result = "";
+      for (let i = 0; i < length; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return result;
+    }
+    
+    // Handle Create Room Form submission.
+    const createRoomForm = document.getElementById("createRoomForm");
+    createRoomForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const roomName = document.getElementById("room_name").value.trim();
+      if (!roomName) return;
+      
+      try {
+        const roomCode = generateRoomCode();
+        // Create a room document in Firestore.
+        await addDoc(collection(db, "rooms"), {
+          teacher_id: auth.currentUser.uid,
+          room_id: roomCode,
+          room_name: roomName,
+          created_at: serverTimestamp()
+        });
+        alert("Room created successfully!");
+        createRoomForm.reset();
+        loadRooms(); // Refresh room list.
+      } catch (error) {
+        console.error("Error creating room:", error);
+        alert("Error creating room: " + error.message);
+      }
+    });
+    
+    // Function to load rooms created by the current teacher.
+    async function loadRooms() {
+      try {
+        const roomsQuery = query(
+          collection(db, "rooms"),
+          where("teacher_id", "==", auth.currentUser.uid),
+          orderBy("created_at", "desc")
+        );
+        const querySnapshot = await getDocs(roomsQuery);
+        const rooms = [];
+        querySnapshot.forEach((doc) => {
+          const roomData = doc.data();
+          roomData.docId = doc.id;
+          rooms.push(roomData);
+        });
+        displayRooms(rooms);
+      } catch (error) {
+        console.error("Error loading rooms:", error);
+      }
+    }
+    
+    // Function to display the list of rooms.
+    async function displayRooms(rooms) {
+      const container = document.getElementById("rooms-container");
+      container.innerHTML = "";
+      if (rooms.length === 0) {
+        document.getElementById("no-rooms").style.display = "block";
+      } else {
+        document.getElementById("no-rooms").style.display = "none";
+        rooms.forEach(async (room) => {
+          const roomDiv = document.createElement("div");
+          roomDiv.classList.add("room");
+          
+          const title = document.createElement("h3");
+          title.textContent = room.room_name + " ";
+          const codeSpan = document.createElement("small");
+          codeSpan.textContent = "(Room Code: " + room.room_id + ")";
+          title.appendChild(codeSpan);
+          roomDiv.appendChild(title);
+          
+          // Create a container for displaying players.
+          const playersContainer = document.createElement("div");
+          try {
+            const playersQuery = query(
+              collection(db, "users"),
+              where("room_id", "==", room.room_id),
+              where("user_type", "==", "player")
+            );
+            const playersSnapshot = await getDocs(playersQuery);
+            const players = [];
+            playersSnapshot.forEach((doc) => {
+              const playerData = doc.data();
+              players.push(playerData.username || "Anonymous");
+            });
+            if (players.length > 0) {
+              const ul = document.createElement("ul");
+              ul.classList.add("players-list");
+              players.forEach((player) => {
+                const li = document.createElement("li");
+                li.textContent = player;
+                ul.appendChild(li);
+              });
+              playersContainer.appendChild(ul);
+            } else {
+              const noPlayers = document.createElement("p");
+              noPlayers.classList.add("no-players");
+              noPlayers.textContent = "No players have joined this room yet.";
+              playersContainer.appendChild(noPlayers);
+            }
+          } catch (error) {
+            console.error("Error loading players for room " + room.room_id + ":", error);
+          }
+          roomDiv.appendChild(playersContainer);
+          container.appendChild(roomDiv);
+        });
+      }
+    }
+    
+    // Logout functionality.
+    const logoutButton = document.getElementById("logout-button");
+    if (logoutButton) {
+      logoutButton.addEventListener("click", (e) => {
+        e.preventDefault();
+        signOut(auth)
+          .then(() => { window.location.href = "login.html"; })
+          .catch((error) => { console.error("Error signing out:", error); });
+      });
+    }
+  </script>
+  
+  <!-- Optional external JavaScript -->
+  <script src="api.js"></script>
+</body>
+</html>
